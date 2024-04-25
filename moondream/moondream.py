@@ -3,12 +3,11 @@ from .vision_encoder import VisionEncoder
 from .configuration_moondream import MoondreamConfig
 from transformers import PreTrainedModel, AutoModelForCausalLM
 
-from .modeling_phi import PhiForCausalLM
 from .modeling_phi3 import Phi3ForCausalLM
-from .configuration_moondream import PhiConfig, Phi3Config
+from .configuration_moondream import Phi3Config
 
 
-class Moondream(PreTrainedModel):
+class MoonDreamPhi3(PreTrainedModel):
     config_class = MoondreamConfig
     _supports_flash_attn_2 = True
 
@@ -19,12 +18,12 @@ class Moondream(PreTrainedModel):
         )
 
         if type(config.text_config) == dict:
-            phi_config = PhiConfig(
+            phi_config = Phi3Config(
                 **config.text_config, attn_implementation=config._attn_implementation
             )
         else:
             phi_config = config.text_config
-        self.text_model = PhiForCausalLM(phi_config)
+        self.text_model = Phi3ForCausalLM(phi_config)
 
     @property
     def device(self):
@@ -174,19 +173,3 @@ class Moondream(PreTrainedModel):
             x.strip()
             for x in tokenizer.batch_decode(output_ids, skip_special_tokens=True)
         ]
-
-
-class MoonDreamPhi3(Moondream):
-    
-    def __init__(self, config):
-        super(Moondream, self).__init__(config)
-        self.vision_encoder = VisionEncoder(
-            use_flash_attn=config._attn_implementation == "flash_attention_2"
-        )
-        if type(config.text_config) == dict:
-            phi_config = Phi3Config(
-                **config.text_config, attn_implementation=config._attn_implementation
-            )
-        else:
-            phi_config = config.text_config
-        self.text_model = Phi3ForCausalLM(phi_config)
